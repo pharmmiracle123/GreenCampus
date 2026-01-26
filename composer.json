@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: mcode-sales
+    env: php
+    plan: free
+    buildCommand: ""
+    startCommand: ""
