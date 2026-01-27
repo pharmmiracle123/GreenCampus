@@ -424,10 +424,7 @@ function exportExcel() {
 /* =====================================================
    INITIALIZE
 ===================================================== */
-document.addEventListener('DOMContentLoaded', () => {
-  loadProducts();
-  updateCartUI();
-});
+
 
 // Hook admin link
 document.querySelectorAll('a[href="#admin"]').forEach(a => {
