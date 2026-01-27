@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MCODE SALES</title>
+<title>Shopkite Merchant Clone</title>
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -170,10 +170,10 @@ auth.onAuthStateChanged(user => {
 
 <script>
 /* =====================================================
-   LOCAL STORAGE VARIABLES
+   VARIABLES
 ===================================================== */
 
-let productData = JSON.parse(localStorage.getItem('products') || '[]');
+let productData = []; // <-- removed extra quote
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 let soldData = JSON.parse(localStorage.getItem('sold') || '[]');
 
@@ -197,36 +197,179 @@ const cashPay = document.getElementById('cashPay');
 const posPay = document.getElementById('posPay');
 const bankPay = document.getElementById('bankPay');
 
-/* ADMIN PANEL FUNCTIONS */
-function showAdmin(){
-  if(prompt("Enter Password")!=="ADMIN123") return;
+/* =====================================================
+   LOAD PRODUCTS FROM DATABASE
+===================================================== */
+function loadProducts(search = '') {
+  fetch("get_products.php")
+    .then(res => res.json())
+    .then(data => {
+      productData = data;         // save products from MySQL
+      renderProducts(search);     // render products to page
+      renderAdminPanel();         // update admin panel
+    })
+    .catch(err => {
+      console.error("Error loading products:", err);
+      alert("Failed to load products from server");
+    });
+}
+
+/* =====================================================
+   RENDER PRODUCTS
+===================================================== */
+function renderProducts(search = '') {
+  productListEl.innerHTML = '';
+  productData
+    .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    .forEach((p, i) => {
+      productListEl.innerHTML += `
+      <div class="bg-white shadow p-4 rounded-lg">
+        <h3 class="font-semibold">${p.name} ${p.qty <= 5 ? `<span class="low-stock">(Low Stock: ${p.qty})</span>` : ''}</h3>
+        <p class="text-red-600 font-bold">₦${p.price}</p>
+        <p class="text-sm">Stock: ${p.qty}</p>
+        <div class="flex justify-between mt-2">
+          <button onclick="adjustQty(${i},-1)" class="px-2 bg-gray-200 rounded">-</button>
+          <span id="qty${i}">1</span>
+          <button onclick="adjustQty(${i},1)" class="px-2 bg-gray-200 rounded">+</button>
+        </div>
+        <button onclick="addToCart(${i})" class="bg-gradient-to-r from-red-500 to-red-700 text-white w-full py-2 rounded mt-2">Add to Cart</button>
+      </div>`;
+    });
+}
+
+/* =====================================================
+   QUANTITY ADJUST
+===================================================== */
+function adjustQty(idx, val) {
+  const el = document.getElementById('qty' + idx);
+  let qty = parseInt(el.innerText) + val;
+  if (qty < 1) qty = 1;
+  el.innerText = qty;
+}
+
+/* =====================================================
+   CART FUNCTIONS
+===================================================== */
+function addToCart(idx) {
+  const qtySel = +document.getElementById('qty' + idx).innerText;
+  if (qtySel > productData[idx].qty) return alert("Not enough stock");
+  cart.push({ ...productData[idx], qty: qtySel });
+  updateCartUI();
+}
+
+function updateCartUI() {
+  cartItemsEl.innerHTML = '';
+  let total = 0;
+  cart.forEach((p, index) => {
+    total += p.price * p.qty;
+    cartItemsEl.innerHTML += `
+    <div class="flex justify-between items-center bg-gray-100 p-2 rounded">
+      <div>
+        <p class="font-semibold">${p.name} x${p.qty}</p>
+        <p class="text-sm text-gray-600">₦${p.price * p.qty}</p>
+      </div>
+      <button onclick="removeFromCart(${index})" class="text-red-600 text-xl hover:scale-110 transition">❌</button>
+    </div>`;
+  });
+  document.getElementById('cartTotal').innerText = total;
+  document.getElementById('cartCount').innerText = cart.length;
+  saveLocal();
+}
+
+function removeFromCart(index) {
+  cart.splice(index, 1);
+  updateCartUI();
+}
+
+/* =====================================================
+   SAVE LOCAL DATA (cart and sold)
+===================================================== */
+function saveLocal() {
+  localStorage.setItem('cart', JSON.stringify(cart));
+  localStorage.setItem('sold', JSON.stringify(soldData));
+}
+
+/* =====================================================
+   SEARCH
+===================================================== */
+searchProd.oninput = e => renderProducts(e.target.value);
+
+/* =====================================================
+   ADMIN PANEL FUNCTIONS
+===================================================== */
+function showAdmin() {
+  if (prompt("Enter Password") !== "ADMIN123") return;
   document.getElementById('admin').classList.remove('hidden');
   renderAdminPanel();
 }
 
-function renderAdminPanel(){
+function renderAdminPanel() {
   const adminListEl = document.getElementById('adminList');
   adminListEl.innerHTML = '';
-  productData.forEach((p,i)=>{
+  productData.forEach((p, i) => {
     adminListEl.innerHTML += `
     <div class="flex justify-between items-center bg-white p-2 rounded mb-1 shadow-sm">
       <span>${p.name} (Stock: ${p.qty})</span>
       <div class="flex gap-2">
-        <button onclick="updateStock(${i},1)" class="px-2 bg-green-600 text-white rounded">+</button>
-        <button onclick="updateStock(${i},-1)" class="px-2 bg-red-600 text-white rounded">−</button>
+        <button onclick="updateStock(${p.id},1)" class="px-2 bg-green-600 text-white rounded">+</button>
+        <button onclick="updateStock(${p.id},-1)" class="px-2 bg-red-600 text-white rounded">−</button>
       </div>
     </div>`;
   });
 }
 
-function updateStock(index, change){
-  productData[index].qty += change;
-  if(productData[index].qty < 0) productData[index].qty = 0;
-  saveLocal();
-  renderProducts();
-  renderAdminPanel();
+function updateStock(productId, change) {
+  // Send stock update to PHP/MySQL
+  fetch("update_stock.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: productId, change })
+  })
+    .then(res => res.text())
+    .then(res => {
+      if (res === "ok") loadProducts();
+      else alert("Error updating stock");
+    })
+    .catch(err => console.error(err));
 }
 
+/* =====================================================
+   ADD PRODUCT (with Admin password)
+===================================================== */
+document.getElementById('addProductForm').onsubmit = e => {
+  e.preventDefault();
+  const adminPass = prompt("Enter Admin Password:");
+  if (!adminPass) return;
+
+  const name = prodName.value.trim();
+  const price = +prodPrice.value;
+  const qty = +prodQty.value;
+  if (!name || !price || !qty) return alert("Fill all fields");
+
+  // Send to PHP/MySQL
+  fetch("add_product.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, price, stock: qty, password: adminPass })
+  })
+    .then(res => res.text())
+    .then(res => {
+      if (res === "ok") {
+        loadProducts();
+        prodName.value = '';
+        prodPrice.value = '';
+        prodQty.value = '1';
+      } else alert(res || "Error adding product");
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Server error");
+    });
+};
+
+/* =====================================================
+   SALES HISTORY
+===================================================== */
 function toggleHistory() {
   const h = document.getElementById('history');
   h.classList.toggle('hidden');
@@ -236,16 +379,14 @@ function toggleHistory() {
 function renderHistory() {
   const list = document.getElementById('historyList');
   list.innerHTML = '';
-  
-  if (soldData.length === 0) {
+  if (!soldData.length) {
     list.innerHTML = '<p class="text-gray-500">No sales yet</p>';
     return;
   }
-  
-  soldData.forEach((s, i) => {
+  soldData.forEach(s => {
     list.innerHTML += `
     <div class="border p-3 rounded shadow-sm">
-      <b>${s.name}</b> x${s.qty} — ₦${s.price*s.qty}<br>
+      <b>${s.name}</b> x${s.qty} — ₦${s.price * s.qty}<br>
       <small>
         Cash: ₦${s.payment.cash} |
         POS: ₦${s.payment.pos} |
@@ -254,32 +395,24 @@ function renderHistory() {
     </div>`;
   });
 }
+
 function printHistory() {
   let w = window.open('', '', 'width=800,height=600');
   w.document.write('<h2>MCODE SALES – Sales Report</h2>');
-  
   soldData.forEach(s => {
     w.document.write(`
-      <p>
-        ${s.name} x${s.qty} – ₦${s.price*s.qty}<br>
-        Cash: ₦${s.payment.cash},
-        POS: ₦${s.payment.pos},
-        Bank: ₦${s.payment.bank}
-      </p>
-      <hr>
-    `);
+      <p>${s.name} x${s.qty} – ₦${s.price * s.qty}<br>
+      Cash: ₦${s.payment.cash}, POS: ₦${s.payment.pos}, Bank: ₦${s.payment.bank}</p><hr>`);
   });
-  
   w.print();
   w.close();
 }
+
 function exportExcel() {
   let csv = "Product,Qty,Price,Total,Cash,POS,Bank\n";
-  
   soldData.forEach(s => {
-    csv += `${s.name},${s.qty},${s.price},${s.price*s.qty},${s.payment.cash},${s.payment.pos},${s.payment.bank}\n`;
+    csv += `${s.name},${s.qty},${s.price},${s.price * s.qty},${s.payment.cash},${s.payment.pos},${s.payment.bank}\n`;
   });
-  
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -287,129 +420,23 @@ function exportExcel() {
   a.download = 'MCODE_SALES_HISTORY.csv';
   a.click();
 }
-/* Hook admin link */
-document.querySelectorAll('a[href="#admin"]').forEach(a=>{
-  a.onclick = e => { e.preventDefault(); showAdmin(); scrollTo({top:0,behavior:'smooth'}); };
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  loadProducts();
+  updateCartUI();
 });
 
-/* =====================================================
-   SAVE TO LOCAL STORAGE
-===================================================== */
-function saveLocal(){
-  localStorage.setItem('products', JSON.stringify(productData));
-  localStorage.setItem('cart', JSON.stringify(cart));
-  localStorage.setItem('sold', JSON.stringify(soldData));
-}
-
-/* =====================================================
-   RENDER PRODUCTS
-===================================================== */
-function renderProducts(search=''){
-  productListEl.innerHTML='';
-  productData.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
-  .forEach((p,i)=>{
-    productListEl.innerHTML += `
-    <div class="bg-white shadow p-4 rounded-lg">
-      <h3 class="font-semibold">${p.name} ${p.qty<=5?`<span class="low-stock">(Low Stock: ${p.qty})</span>`:''}</h3>
-      <p class="text-red-600 font-bold">₦${p.price}</p>
-      <p class="text-sm">Stock: ${p.qty}</p>
-      <div class="flex justify-between mt-2">
-        <button onclick="adjustQty(${i},-1)" class="px-2 bg-gray-200 rounded">-</button>
-        <span id="qty${i}">1</span>
-        <button onclick="adjustQty(${i},1)" class="px-2 bg-gray-200 rounded">+</button>
-      </div>
-      <button onclick="addToCart(${i})" class="bg-gradient-to-r from-red-500 to-red-700 text-white w-full py-2 rounded mt-2">Add to Cart</button>
-    </div>`;
-  });
-}
-
-/* =====================================================
-   QUANTITY ADJUST
-===================================================== */
-function adjustQty(idx,val){
-  const el=document.getElementById('qty'+idx);
-  let qty=parseInt(el.innerText)+val;
-  if(qty<1) qty=1;
-  el.innerText=qty;
-}
-
-/* =====================================================
-   CART FUNCTIONS
-===================================================== */
-function addToCart(idx){
-  const qtySel = +document.getElementById('qty'+idx).innerText;
-  if(qtySel>productData[idx].qty) return alert("Not enough stock");
-  cart.push({...productData[idx], qty: qtySel});
-  updateCartUI();
-}
-
-function updateCartUI(){
-  cartItemsEl.innerHTML='';
-  let total=0;
-  cart.forEach((p,index)=>{
-    total+=p.price*p.qty;
-    cartItemsEl.innerHTML+=`
-    <div class="flex justify-between items-center bg-gray-100 p-2 rounded">
-      <div>
-        <p class="font-semibold">${p.name} x${p.qty}</p>
-        <p class="text-sm text-gray-600">₦${p.price*p.qty}</p>
-      </div>
-      <button onclick="removeFromCart(${index})" class="text-red-600 text-xl hover:scale-110 transition">❌</button>
-    </div>`;
-  });
-  document.getElementById('cartTotal').innerText=total;
-  document.getElementById('cartCount').innerText=cart.length;
-  saveLocal();
-}
-
-function removeFromCart(index){ cart.splice(index,1); updateCartUI(); }
-
-/* =====================================================
-   ADD PRODUCT
-===================================================== */
-document.getElementById('addProductForm').onsubmit=e=>{
-  e.preventDefault();
-  if(prompt("Enter Password")!=="ADMIN123") return alert("Wrong password");
-  const name = prodName.value;
-  const price = +prodPrice.value;
-  const qty = +prodQty.value;
-  if(!name || !price || !qty) return alert("Fill all fields");
-  productData.push({name,price,qty});
-  saveLocal(); renderProducts(); prodName.value=''; prodPrice.value=''; prodQty.value='1';
-}
-
-/* =====================================================
-   SEARCH
-===================================================== */
-searchProd.oninput=e=>renderProducts(e.target.value);
-
-/* =====================================================
-   MODALS
-===================================================== */
-cartBtn.onclick=()=>cartModal.style.display='flex';
-const cartModal = document.getElementById('cartModal');
-closeCart.onclick=()=>cartModal.style.display='none';
-checkoutBtn.onclick=()=>{
-  cartModal.style.display='none';
-  let summary='', total=0;
-  cart.forEach(i=>{summary+=`${i.name} x${i.qty} - ₦${i.price*i.qty}\n`; total+=i.price*i.qty;});
-  orderSummary.value = summary + `Total: ₦${total}`;
-  checkoutModal.style.display='flex';
-};
-closeCheckout.onclick=()=>checkoutModal.style.display='none';
-confirmOrder.onclick=()=>{
-  const cash=+cashPay.value||0, pos=+posPay.value||0, bank=+bankPay.value||0;
-  const paid = cash+pos+bank;
-  const total = cart.reduce((a,p)=>a+p.price*p.qty,0);
-  if(paid<total) return alert("Incomplete payment");
-  cart.forEach(c=>{
-    const idx=productData.findIndex(p=>p.name===c.name);
-    if(idx!==-1) productData[idx].qty -= c.qty;
-    soldData.push({...c,payment:{cash,pos,bank}});
-  });
-  cart=[]; saveLocal(); renderProducts(); updateCartUI(); checkoutModal.style.display='none'; alert("Sale completed");
-}
-
+// Hook admin link
+document.querySelectorAll('a[href="#admin"]').forEach(a => {
+  a.onclick = e => {
+    e.preventDefault();
+    showAdmin();
+    scrollTo({ top: 0, behavior: 'smooth' });
+  };
+});
 /* ==============================
    DISABLED USER CHECK
 ============================== */
@@ -441,10 +468,6 @@ function setAuthIcon(loggedIn) {
     }
   };
 }
-/* =====================================================
-   INITIAL RENDER
-===================================================== */
-renderProducts(); updateCartUI();
 </script>
 </body>
 </html>
