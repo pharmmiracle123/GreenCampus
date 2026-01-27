@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
    LOAD PRODUCTS FROM DATABASE
 ===================================================== */
 function loadProducts(search = '') {
-  fetch("get_products.php")
+  fetch("get_product.php")
     .then(res => res.json())
     .then(data => {
       productData = data;         // save products from MySQL
