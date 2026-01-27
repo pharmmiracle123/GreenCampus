@@ -177,25 +177,58 @@ let productData = []; // <-- removed extra quote
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 let soldData = JSON.parse(localStorage.getItem('sold') || '[]');
 
-const productListEl = document.getElementById('productList');
-const cartItemsEl = document.getElementById('cartItems');
-const statCustomers = document.getElementById('statCustomers');
-const statProducts = document.getElementById('statProducts');
-const statRentals = document.getElementById('statRentals');
-const prodName = document.getElementById('prodName');
-const prodPrice = document.getElementById('prodPrice');
-const prodQty = document.getElementById('prodQty');
-const searchProd = document.getElementById('searchProd');
-const cartBtn = document.getElementById('cartBtn');
-const closeCart = document.getElementById('closeCart');
-const checkoutBtn = document.getElementById('checkoutBtn');
-const checkoutModal = document.getElementById('checkoutModal');
-const orderSummary = document.getElementById('orderSummary');
-const closeCheckout = document.getElementById('closeCheckout');
-const confirmOrder = document.getElementById('confirmOrder');
-const cashPay = document.getElementById('cashPay');
-const posPay = document.getElementById('posPay');
-const bankPay = document.getElementById('bankPay');
+document.addEventListener('DOMContentLoaded', () => {
+  
+  // DOM ELEMENTS (SAFE NOW)
+  window.productListEl = document.getElementById('productList');
+  window.cartItemsEl = document.getElementById('cartItems');
+  window.prodName = document.getElementById('prodName');
+  window.prodPrice = document.getElementById('prodPrice');
+  window.prodQty = document.getElementById('prodQty');
+  window.searchProd = document.getElementById('searchProd');
+  
+  window.cartBtn = document.getElementById('cartBtn');
+  window.closeCart = document.getElementById('closeCart');
+  window.checkoutBtn = document.getElementById('checkoutBtn');
+  window.checkoutModal = document.getElementById('checkoutModal');
+  window.orderSummary = document.getElementById('orderSummary');
+  window.closeCheckout = document.getElementById('closeCheckout');
+  window.confirmOrder = document.getElementById('confirmOrder');
+  
+  window.cashPay = document.getElementById('cashPay');
+  window.posPay = document.getElementById('posPay');
+  window.bankPay = document.getElementById('bankPay');
+  
+  // BUTTON ACTIONS
+  cartBtn.onclick = () => {
+    document.getElementById('cartModal').classList.remove('hidden-modal');
+  };
+  
+  closeCart.onclick = () => {
+    document.getElementById('cartModal').classList.add('hidden-modal');
+  };
+  
+  checkoutBtn.onclick = () => {
+    if (!cart.length) return alert("Cart is empty");
+    orderSummary.value = cart.map(p => `${p.name} x${p.qty}`).join('\n');
+    checkoutModal.classList.remove('hidden-modal');
+  };
+  
+  closeCheckout.onclick = () => {
+    checkoutModal.classList.add('hidden-modal');
+  };
+  
+  confirmOrder.onclick = () => {
+    alert("Order confirmed");
+    checkoutModal.classList.add('hidden-modal');
+    cart = [];
+    updateCartUI();
+  };
+  
+  // INIT
+  loadProducts();
+  updateCartUI();
+});
 
 /* =====================================================
    LOAD PRODUCTS FROM DATABASE
@@ -427,29 +460,6 @@ function exportExcel() {
 document.addEventListener('DOMContentLoaded', () => {
   loadProducts();
   updateCartUI();
-  
-  // CART MODAL
-  cartBtn.addEventListener('click', () => {
-    document.getElementById('cartModal').classList.remove('hidden-modal');
-  });
-  
-  closeCart.addEventListener('click', () => {
-    document.getElementById('cartModal').classList.add('hidden-modal');
-  });
-  
-  // CHECKOUT MODAL
-  checkoutBtn.addEventListener('click', () => {
-    document.getElementById('checkoutModal').classList.remove('hidden-modal');
-  });
-  
-  closeCheckout.addEventListener('click', () => {
-    document.getElementById('checkoutModal').classList.add('hidden-modal');
-  });
-  
-  confirmOrder.addEventListener('click', () => {
-    alert("Order confirmed!");
-    // You can call your checkout PHP here
-  });
 });
 
 // Hook admin link
