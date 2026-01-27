@@ -179,57 +179,82 @@ let soldData = JSON.parse(localStorage.getItem('sold') || '[]');
 
 document.addEventListener('DOMContentLoaded', () => {
   
-  // DOM ELEMENTS (SAFE NOW)
-  window.productListEl = document.getElementById('productList');
-  window.cartItemsEl = document.getElementById('cartItems');
-  window.prodName = document.getElementById('prodName');
-  window.prodPrice = document.getElementById('prodPrice');
-  window.prodQty = document.getElementById('prodQty');
-  window.searchProd = document.getElementById('searchProd');
+  /* ======================
+     DOM ELEMENTS (SAFE)
+  ======================= */
+  const productListEl = document.getElementById('productList');
+  const cartItemsEl = document.getElementById('cartItems');
+  const prodName = document.getElementById('prodName');
+  const prodPrice = document.getElementById('prodPrice');
+  const prodQty = document.getElementById('prodQty');
+  const searchProd = document.getElementById('searchProd');
   
-  window.cartBtn = document.getElementById('cartBtn');
-  window.closeCart = document.getElementById('closeCart');
-  window.checkoutBtn = document.getElementById('checkoutBtn');
-  window.checkoutModal = document.getElementById('checkoutModal');
-  window.orderSummary = document.getElementById('orderSummary');
-  window.closeCheckout = document.getElementById('closeCheckout');
-  window.confirmOrder = document.getElementById('confirmOrder');
+  const cartBtn = document.getElementById('cartBtn');
+  const closeCart = document.getElementById('closeCart');
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  const checkoutModal = document.getElementById('checkoutModal');
+  const cartModal = document.getElementById('cartModal');
+  const orderSummary = document.getElementById('orderSummary');
+  const closeCheckout = document.getElementById('closeCheckout');
+  const confirmOrder = document.getElementById('confirmOrder');
   
-  window.cashPay = document.getElementById('cashPay');
-  window.posPay = document.getElementById('posPay');
-  window.bankPay = document.getElementById('bankPay');
+  const cashPay = document.getElementById('cashPay');
+  const posPay = document.getElementById('posPay');
+  const bankPay = document.getElementById('bankPay');
   
-  // BUTTON ACTIONS
-  cartBtn.onclick = () => {
-    document.getElementById('cartModal').classList.remove('hidden-modal');
-  };
+  /* ======================
+     SEARCH (NO CRASH)
+  ======================= */
+  if (searchProd) {
+    searchProd.addEventListener('input', e => {
+      renderProducts(e.target.value);
+    });
+  }
   
-  closeCart.onclick = () => {
-    document.getElementById('cartModal').classList.add('hidden-modal');
-  };
+  /* ======================
+     CART MODAL
+  ======================= */
+  cartBtn?.addEventListener('click', () => {
+    cartModal.classList.remove('hidden-modal');
+  });
   
-  checkoutBtn.onclick = () => {
-    if (!cart.length) return alert("Cart is empty");
-    orderSummary.value = cart.map(p => `${p.name} x${p.qty}`).join('\n');
+  closeCart?.addEventListener('click', () => {
+    cartModal.classList.add('hidden-modal');
+  });
+  
+  /* ======================
+     CHECKOUT MODAL
+  ======================= */
+  checkoutBtn?.addEventListener('click', () => {
+    if (!cart.length) {
+      alert("Cart is empty");
+      return;
+    }
+    
+    orderSummary.value = cart
+      .map(p => `${p.name} x${p.qty}`)
+      .join('\n');
+    
     checkoutModal.classList.remove('hidden-modal');
-  };
+  });
   
-  closeCheckout.onclick = () => {
+  closeCheckout?.addEventListener('click', () => {
     checkoutModal.classList.add('hidden-modal');
-  };
+  });
   
-  confirmOrder.onclick = () => {
+  confirmOrder?.addEventListener('click', () => {
     alert("Order confirmed");
     checkoutModal.classList.add('hidden-modal');
     cart = [];
     updateCartUI();
-  };
+  });
   
-  // INIT
+  /* ======================
+     INIT
+  ======================= */
   loadProducts();
   updateCartUI();
 });
-
 /* =====================================================
    LOAD PRODUCTS FROM DATABASE
 ===================================================== */
@@ -325,7 +350,6 @@ function saveLocal() {
 /* =====================================================
    SEARCH
 ===================================================== */
-searchProd.oninput = e => renderProducts(e.target.value);
 
 /* =====================================================
    ADMIN PANEL FUNCTIONS
