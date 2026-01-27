@@ -424,7 +424,33 @@ function exportExcel() {
 /* =====================================================
    INITIALIZE
 ===================================================== */
-
+document.addEventListener('DOMContentLoaded', () => {
+  loadProducts();
+  updateCartUI();
+  
+  // CART MODAL
+  cartBtn.addEventListener('click', () => {
+    document.getElementById('cartModal').classList.remove('hidden-modal');
+  });
+  
+  closeCart.addEventListener('click', () => {
+    document.getElementById('cartModal').classList.add('hidden-modal');
+  });
+  
+  // CHECKOUT MODAL
+  checkoutBtn.addEventListener('click', () => {
+    document.getElementById('checkoutModal').classList.remove('hidden-modal');
+  });
+  
+  closeCheckout.addEventListener('click', () => {
+    document.getElementById('checkoutModal').classList.add('hidden-modal');
+  });
+  
+  confirmOrder.addEventListener('click', () => {
+    alert("Order confirmed!");
+    // You can call your checkout PHP here
+  });
+});
 
 // Hook admin link
 document.querySelectorAll('a[href="#admin"]').forEach(a => {
