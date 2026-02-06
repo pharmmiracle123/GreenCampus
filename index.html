@@ -1,0 +1,431 @@
+<!DOCTYPE html>    
+<html lang="en">    
+<head>    
+<meta charset="UTF-8">    
+<title>🌱 Green Campus | NAUS</title>    
+<meta name="viewport" content="width=device-width, initial-scale=1.0">    
+<script src="https://cdn.tailwindcss.com"></script>    
+<style>    
+  .section { display: none; }    
+  .active { display: block; }    
+  #sideNav { transition: transform .3s ease; }    
+  #sideNav.closed { transform: translateX(-100%); }    
+  .post-card { border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px; background:white; }    
+  .post-actions button { margin-right:8px; color:#1d4ed8; font-weight:bold; }    
+  .product-img { max-width: 100%; border-radius: 8px; margin-bottom: 8px; }    
+</style>    
+</head>    
+<body class="bg-gray-100 min-h-screen flex flex-col">    
+    
+<header class="bg-gradient-to-r from-green-800 to-emerald-700 text-white shadow-lg">    
+  <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">    
+    <div class="flex items-center gap-3">    
+      <button id="openNav" class="md:hidden text-2xl">☰</button>    
+      <h1 class="text-2xl font-extrabold tracking-wide">🌱 Green Campus</h1>    
+    </div>    
+    <button onclick="logout()" title="Logout">🚪 Logout</button>    
+    <div class="flex items-center gap-4">    
+      <span class="bg-green-600 px-3 py-1 rounded text-sm">    
+        Role: <strong id="roleBadge">STUDENT</strong>    
+      </span>    
+    </div>    
+  </div>    
+</header>    
+    
+<div class="flex flex-1 overflow-hidden">    
+<aside id="sideNav" class="bg-green-900 text-white w-64 fixed md:relative h-full z-50 closed md:translate-x-0">    
+  <div class="p-6 border-b border-green-700 flex justify-between items-center">    
+    <span class="font-bold text-lg">🌱 Menu</span>    
+    <button id="closeNav" class="md:hidden text-xl">✕</button>    
+  </div>    
+  <nav class="p-4 space-y-2 text-sm">    
+  <button onclick="showSection('general')" class="w-full text-left px-4 py-2 rounded hover:bg-green-700">General Feed</button>    
+  <button onclick="showSection('school')" class="w-full text-left px-4 py-2 rounded hover:bg-green-700">School Feed</button>    
+  <button onclick="showSection('market')" class="w-full text-left px-4 py-2 rounded hover:bg-green-700">Market</button>    
+  <button onclick="showSection('pendingPosts')" class="w-full text-left px-4 py-2 rounded hover:bg-green-700">Pending Posts</button>    
+  <button onclick="showSection('paystack')" class="w-full text-left px-4 py-2 rounded hover:bg-green-700">Paystack</button>    
+  <button onclick="showSection('complaint')" class="w-full text-left px-4 py-2 rounded hover:bg-green-700">Complaints</button>    
+</nav>    
+  <div class="mt-auto p-4 border-t border-green-700 text-xs text-green-200">    
+    NAUS • Green Campus<br>© 2026 All rights reserved    
+  </div>    
+</aside>    
+    
+<main class="flex-1 p-6 md:ml-0 overflow-y-auto">    
+    
+<!-- GENERAL FEED -->    
+<section id="general" class="section active">    
+  <h2 class="text-3xl font-bold mb-4">🌍 General Feed</h2>    
+  <div id="generalPosts" class="space-y-3"></div>    
+</section>    
+<!-- PENDING MARKET POSTS -->    
+<section id="pendingPosts" class="section">    
+  <h2 class="text-3xl font-bold mb-4">⏳ Pending Market Posts</h2>    
+  <div id="pendingPostsContainer" class="space-y-3"></div>    
+  <p id="noPending" class="text-gray-500 mt-2"></p>    
+</section>    
+<!-- SCHOOL FEED -->    
+<section id="school" class="section">    
+  <h2 class="text-3xl font-bold mb-4">🏫 School Feed</h2>    
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">    
+    <div onclick="selectSchool('Niger Delta University')" class="bg-white p-4 rounded shadow hover:shadow-lg cursor-pointer">Niger Delta University</div>    
+    <div onclick="selectSchool('Bayelsa Medical University')" class="bg-white p-4 rounded shadow hover:shadow-lg cursor-pointer">Bayelsa Medical University</div>    
+    <div onclick="selectSchool('Federal University Otuoke')" class="bg-white p-4 rounded shadow hover:shadow-lg cursor-pointer">Federal University Otuoke</div>    
+  </div>    
+  <div id="schoolPosts" class="bg-green-50 p-4 rounded mb-4">Select a school to view posts.</div>    
+  <div id="schoolPostForm" class="mt-4 p-4 bg-white rounded shadow hidden">    
+    <h3 class="font-semibold mb-2">Post to School Feed</h3>    
+    <input id="schoolTitle" class="w-full border p-2 rounded mb-2" placeholder="Title">    
+    <textarea id="schoolContent" class="w-full border p-2 rounded mb-2" placeholder="Content"></textarea>    
+    <input id="schoolCode" class="w-full border p-2 rounded mb-2" placeholder="Enter University Code">    
+    <button onclick="postSchool()" class="bg-green-700 text-white px-4 py-2 rounded">Post</button>    
+  </div>    
+</section>    
+    
+<!-- MARKET -->    
+<section id="market" class="section">    
+  <h2 class="text-3xl font-bold mb-4">🛒 Student Market</h2>    
+    
+  <!-- Access Market -->    
+  <div class="bg-white p-6 rounded-xl shadow mb-6">    
+    <h3 class="font-semibold mb-3">Market Access</h3>    
+    <input id="marketCode" class="w-full border p-2 rounded mb-4" placeholder="Enter Market Code">    
+    <button onclick="accessMarket()" class="bg-green-700 text-white px-4 py-2 rounded">OK</button>    
+  </div>    
+    
+  <!-- Student Market Form (shown after access granted) -->    
+  <div id="marketForm" class="bg-white p-4 rounded-xl shadow max-w-xl mx-auto hidden">    
+    <h2 class="font-bold text-lg mb-3">📦 Post to Market</h2>    
+    <input id="bizName" placeholder="Business / Seller Name" class="w-full border p-2 rounded mb-2">    
+    <input id="productName" placeholder="Product Name" class="w-full border p-2 rounded mb-2">    
+    <input id="price" type="number" placeholder="Price (₦)" class="w-full border p-2 rounded mb-2">    
+    <input id="contact" placeholder="WhatsApp Number" class="w-full border p-2 rounded mb-2">    
+    <input id="image" type="file" accept="image/*" class="w-full mb-2">    
+    <button onclick="submitMarketPost()" class="w-full bg-green-700 text-white py-2 rounded">Submit</button>    
+  </div>    
+    
+  <!-- Market Posts -->    
+  <div id="marketPosts" class="space-y-3 mt-4"></div>    
+</section>    
+    
+<!-- PAYSTACK -->    
+<section id="paystack" class="section">    
+  <h2 class="text-3xl font-bold mb-4">💳 Make Payment</h2>    
+  <p>Click below to pay via Paystack. After payment, you'll be redirected to WhatsApp to receive your market code.</p>    
+  <button onclick="payNow()" class="bg-yellow-500 text-black px-6 py-3 rounded mt-4 font-bold">Pay Now</button>    
+</section>    
+    
+<!-- COMPLAINT -->    
+<section id="complaint" class="section">    
+  <h2 class="text-3xl font-bold mb-4">📢 Complaints</h2>    
+  <textarea id="complaintText" class="w-full border p-3 rounded mb-3" placeholder="Write your complaint"></textarea>    
+  <button onclick="submitComplaint()" class="bg-green-700 text-white px-6 py-2 rounded">Submit</button>    
+</section>    
+    
+</main>    
+</div>    
+    
+<footer class="bg-green-900 text-green-200 text-center py-4">    
+  🌱 Green Campus • Powered by NAUS • Built for Nigerian Students    
+</footer>    
+    
+<script type="module">    
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";    
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";    
+import { getDatabase, ref, set, get, child, push, update, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";    
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";    
+    
+const firebaseConfig = {    
+  apiKey: "AIzaSyB1k9_w1-SwQ_68sQ4yM9NOF_clU9_PKg0",    
+  authDomain: "green-54f87.firebaseapp.com",    
+  databaseURL: "https://green-54f87-default-rtdb.firebaseio.com",    
+  projectId: "green-54f87",    
+  storageBucket: "green-54f87.appspot.com",    
+  messagingSenderId: "13622576743",    
+  appId: "1:13622576743:web:93615f9e92d01a3d7d36c2"    
+};    
+    
+const app = initializeApp(firebaseConfig);    
+const auth = getAuth(app);    
+const rtdb = getDatabase(app);    
+const storage = getStorage(app);    
+    
+let currentUser = null;    
+let isAdmin = false;    
+let selectedSchool = "";    
+let marketAccess = false;    
+    
+// NAVIGATION    
+window.showSection = id => {    
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));    
+  const section = document.getElementById(id);    
+  if (section) section.classList.add("active");    
+  if (id === "pendingPosts" && isAdmin) loadPendingPosts();    
+};    
+document.getElementById("openNav").onclick = () => document.getElementById("sideNav").classList.remove("closed");    
+document.getElementById("closeNav").onclick = () => document.getElementById("sideNav").classList.add("closed");    
+    
+// AUTH    
+onAuthStateChanged(auth, async user => {    
+  if (!user) return window.location.href = "login.html";    
+  currentUser = user;    
+    
+  const snapshot = await get(child(ref(rtdb), "users/" + user.uid));    
+  const userData = snapshot.exists() ? snapshot.val() : { role: "student" };    
+  isAdmin = (userData.role || "").toLowerCase() === "admin";    
+  document.getElementById("roleBadge").innerText = isAdmin ? "ADMIN" : "STUDENT";    
+    
+  loadSchoolPosts();    
+  loadGeneralPosts();    
+  loadMarketPosts();    
+});    
+    
+// LOGOUT    
+window.logout = () => signOut(auth).then(() => window.location.href = "login.html");    
+    
+// SCHOOL POSTS    
+window.selectSchool = name => {    
+  selectedSchool = name;    
+  showSection('school');    
+  document.getElementById("schoolPostForm").style.display = isAdmin ? "block" : "none";    
+  loadSchoolPosts();    
+};    
+    
+async function loadSchoolPosts() {    
+  if (!selectedSchool) return;    
+  const snap = await get(ref(rtdb, "schoolPosts"));    
+  const container = document.getElementById("schoolPosts");    
+  container.innerHTML = "";    
+  snap.forEach(d => {    
+    const post = d.val();    
+    if (post.school === selectedSchool) container.innerHTML += renderSchoolPost(post);    
+  });    
+}    
+    
+window.postSchool = async () => {    
+  if (!isAdmin) { alert("Only admins can post"); return; }    
+  const title = document.getElementById("schoolTitle").value.trim();    
+  const content = document.getElementById("schoolContent").value.trim();    
+  const code = document.getElementById("schoolCode").value.trim();    
+  const validCodes = { "Niger Delta University":"NDU123", "Bayelsa Medical University":"BMU456", "Federal University Otuoke":"FUO789" };    
+  if (code !== validCodes[selectedSchool]) return alert("Invalid code");    
+    
+  const newRef = push(ref(rtdb,"schoolPosts"));    
+  await set(newRef, { school: selectedSchool, title, content, uid: currentUser.uid, createdAt: Date.now() });    
+    
+  document.getElementById("schoolTitle").value = "";    
+  document.getElementById("schoolContent").value = "";    
+  loadSchoolPosts();    
+  loadGeneralPosts();    
+};    
+    
+function renderSchoolPost(post) {    
+  return `<div class="post-card">    
+    <h3 class="font-bold">${post.title}</h3>    
+    <p>${post.content}</p>    
+    <span class="text-gray-500 text-sm">Posted by: ${post.uid}</span>    
+  </div>`;    
+}    
+    
+// MARKET ACCESS    
+window.accessMarket = () => {    
+  const code = document.getElementById("marketCode").value.trim();    
+  const validCodes = ["DAY001","MON001","YEAR001"];    
+  if (!validCodes.includes(code)) return alert("Invalid Market Code");    
+  marketAccess = true;    
+  document.getElementById("marketForm").classList.remove("hidden");    
+  loadMarketPosts();    
+};    
+    
+// SUBMIT MARKET POST    
+window.submitMarketPost = async () => {    
+  if (!marketAccess) return alert("Access required first.");    
+    
+  const biz = bizName.value.trim();    
+  const prod = productName.value.trim();    
+  const priceVal = price.value.trim();    
+  const phone = contact.value.trim();    
+  const file = image.files[0];    
+  if (!biz || !prod || !priceVal || !phone || !file) return alert("Fill all fields");    
+    
+  // Prevent 1 post/day    
+  const q = query(ref(rtdb,"marketPosts"), orderByChild("uid"), limitToLast(50));    
+  const snap = await get(q);    
+  const today = new Date().toDateString();    
+  let todayPost = false;    
+  snap.forEach(d => {    
+    const p = d.val();    
+    if (p.uid === currentUser.uid && new Date(p.createdAt).toDateString() === today) todayPost = true;    
+  });    
+  if (todayPost) return alert("You can only post once per day!");    
+    
+  // Upload image    
+  const imgRef = storageRef(storage, `market/${currentUser.uid}/${Date.now()}_${file.name}`);    
+  await uploadBytes(imgRef, file);    
+  const imgURL = await getDownloadURL(imgRef);    
+    
+  const newRef = push(ref(rtdb,"marketPosts"));    
+  await set(newRef, {    
+    uid: currentUser.uid,    
+    email: currentUser.email || "Unknown",    
+    business: biz,    
+    product: prod,    
+    price: priceVal,    
+    contact: phone,    
+    image: imgURL,    
+    approved: false,    
+    createdAt: Date.now(),    
+    expiresAt: Date.now() + 7*24*60*60*1000    
+  });    
+    
+  alert("Submitted! Awaiting admin approval.");    
+  notifyAdmin(currentUser.uid, prod);    
+  loadMarketPosts();    
+  if (isAdmin) loadPendingPosts();    
+  bizName.value = ""; productName.value = ""; price.value = ""; contact.value = ""; image.value = "";    
+};    
+    
+// NOTIFY ADMIN    
+async function notifyAdmin(uid, product) {    
+  const newRef = push(ref(rtdb,"notifications"));    
+  await set(newRef,{ uid, product, message:`New market post awaiting approval`, createdAt:Date.now() });    
+}    
+    
+// LOAD MARKET POSTS    
+async function loadMarketPosts() {    
+  const snap = await get(ref(rtdb,"marketPosts"));    
+  const container = document.getElementById("marketPosts");    
+  container.innerHTML = "";    
+    
+  snap.forEach(d => {    
+    const post = d.val();    
+    const key = d.key;    
+    const now = Date.now();    
+    if (post.expiresAt && now > post.expiresAt && !post.expired) {    
+      update(ref(rtdb,"marketPosts/"+key), { expired:true });    
+      return;    
+    }    
+    if (!isAdmin && !post.approved) return;    
+    container.innerHTML += renderMarketPost(post, key);    
+  });    
+}    
+    
+// APPROVE POST    
+window.approveMarket = async key => {    
+  await update(ref(rtdb,"marketPosts/"+key), { approved:true });    
+  loadMarketPosts();    
+  if (isAdmin) loadPendingPosts();    
+};    
+    
+// EDIT POST    
+window.editMarketPost = async key => {    
+  const snap = await get(ref(rtdb,"marketPosts/"+key));    
+  if(!snap.exists()) return alert("Post not found.");    
+  const post = snap.val();    
+  const newProduct = prompt("Product Name", post.product);    
+  if(!newProduct) return;    
+  const newPrice = prompt("Price", post.price);    
+  if(!newPrice) return;    
+  await update(ref(rtdb,"marketPosts/"+key), { product:newProduct, price:newPrice, approved:false });    
+  alert("Updated! Awaiting admin approval again.");    
+  loadMarketPosts();    
+  if (isAdmin) loadPendingPosts();    
+};    
+    
+// RENDER MARKET POST    
+function renderMarketPost(post, key) {    
+  const product = post.product || "Unnamed Product";    
+  const price = post.price || "0";    
+  const business = post.business || "Unknown Seller";    
+  const contact = post.contact || "";    
+  const email = post.email || "Unknown";    
+  const imgURL = post.image || "https://via.placeholder.com/150";    
+      
+  const pendingBadge = (!post.approved && isAdmin)     
+    ? `<span class="inline-block bg-red-600 text-white px-2 py-1 text-xs rounded mb-1">Pending from: ${email}</span>`     
+    : "";    
+    
+  return `    
+  <div class="post-card">    
+    ${pendingBadge}    
+    <img src="${imgURL}" class="product-img">    
+    <h3 class="font-bold text-lg">${product}</h3>    
+    <p class="text-green-700 font-semibold">₦${price}</p>    
+    <p class="text-sm">Seller: ${business} (${email})</p>    
+    <a href="https://wa.me/234${contact.slice(-10)}" target="_blank" class="text-blue-600">Chat on WhatsApp</a>    
+    <div class="post-actions mt-2">    
+      ${isAdmin && !post.approved ? `<button onclick="approveMarket('${key}')" class="bg-green-600 text-white px-3 py-1 rounded">Approve</button>` : ""}    
+      ${currentUser.uid === post.uid ? `<button onclick="editMarketPost('${key}')" class="bg-yellow-500 text-white px-3 py-1 rounded">Edit</button>` : ""}    
+    </div>    
+  </div>`;    
+}    
+    
+// GENERAL FEED    
+async function loadGeneralPosts() {    
+  const snap = await get(ref(rtdb,"schoolPosts"));    
+  const container = document.getElementById("generalPosts");    
+  container.innerHTML = "";    
+  snap.forEach(d => {    
+    const post = d.val();    
+    container.innerHTML += `<div class="post-card">    
+      <b>${post.title||post.business}</b> <span class="text-gray-500 text-sm">by ${post.uid}</span>    
+      <p>${post.content||post.product||''}</p>    
+      <div class="post-actions">    
+        <button onclick="alert('Liked!')">Like</button>    
+        <button onclick="alert('Shared!')">Share</button>    
+      </div>    
+    </div>`;    
+  });    
+    
+  // Include approved market posts    
+  const marketSnap = await get(ref(rtdb,"marketPosts"));    
+  marketSnap.forEach(d => {    
+    const post = d.val();    
+    if(post.approved && !post.expired) container.innerHTML += renderMarketPost(post, d.key);    
+  });    
+}    
+    
+// PAYSTACK    
+window.payNow = () => {    
+  window.open("https://wa.me/2348169395022?text=I%20have%20paid%20for%20market%20access", "_blank");    
+};    
+    
+// COMPLAINTS    
+window.submitComplaint = async () => {    
+  const msg = document.getElementById("complaintText").value.trim();    
+  if(!msg) return alert("Write a complaint");    
+  const newRef = push(ref(rtdb,"complaints"));    
+  await set(newRef,{    
+    uid: currentUser.uid,    
+    email: currentUser.email,    
+    message: msg,    
+    status: "pending",    
+    createdAt: Date.now()    
+  });    
+  document.getElementById("complaintText").value="";    
+  alert("Complaint submitted!");    
+};    
+    
+// LOAD PENDING POSTS (Admins only)    
+async function loadPendingPosts() {    
+  if (!isAdmin) return;    
+    
+  const snap = await get(ref(rtdb, "marketPosts"));    
+  const container = document.getElementById("pendingPostsContainer");    
+  container.innerHTML = "";    
+      
+  let hasPending = false;    
+  snap.forEach(d => {    
+    const post = d.val();    
+    const key = d.key;    
+    if (post && !post.approved && !post.expired) {    
+      hasPending = true;    
+      container.innerHTML += renderMarketPost(post, key);    
+    }    
+  });    
+    
+  document.getElementById("noPending").innerText = hasPending ? "" : "No pending posts at the moment.";    
+}    
+</script>    
+</body>    
+</html>
