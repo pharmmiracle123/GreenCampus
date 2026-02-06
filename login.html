@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🌱 Green Campus | Login / Sign Up</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #f0fdf4; }
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+<div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+  <h1 class="text-3xl font-bold text-green-700 mb-6 text-center">🌱 Green Campus</h1>
+
+  <!-- Tabs -->
+  <div class="flex justify-around mb-6">
+    <button id="loginTab" class="font-semibold border-b-2 border-green-700 pb-1">Login</button>
+    <button id="signupTab" class="text-gray-400">Sign Up</button>
+  </div>
+
+  <!-- LOGIN FORM -->
+  <form id="loginForm" class="space-y-4">
+    <input type="email" id="loginEmail" placeholder="Email" required class="w-full border p-3 rounded">
+    <div class="relative">
+      <input type="password" id="loginPassword" placeholder="Password" required class="w-full border p-3 rounded">
+      <button type="button" id="toggleLoginPassword" class="absolute right-3 top-3 text-gray-500">👁️</button>
+    </div>
+    <button type="submit" class="w-full bg-green-700 text-white py-3 rounded">Login</button>
+  </form>
+
+  <!-- SIGNUP FORM -->
+  <form id="signupForm" class="space-y-4 hidden">
+    <input type="text" id="signupName" placeholder="Full Name" required class="w-full border p-3 rounded">
+    <input type="email" id="signupEmail" placeholder="Email" required class="w-full border p-3 rounded">
+    <div class="relative">
+      <input type="password" id="signupPassword" placeholder="Password" required class="w-full border p-3 rounded">
+      <button type="button" id="toggleSignupPassword" class="absolute right-3 top-3 text-gray-500">👁️</button>
+    </div>
+    <div class="relative">
+      <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required class="w-full border p-3 rounded">
+      <button type="button" id="toggleSignupConfirm" class="absolute right-3 top-3 text-gray-500">👁️</button>
+    </div>
+    <button type="submit" class="w-full bg-green-700 text-white py-3 rounded">Sign Up</button>
+  </form>
+
+  <p class="mt-4 text-center text-gray-500 text-sm">
+    🌱 Green Campus • Powered by NAUS
+  </p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyB1k9_w1-SwQ_68sQ4yM9NOF_clU9_PKg0",
+  authDomain: "green-54f87.firebaseapp.com",
+  databaseURL: "https://green-54f87-default-rtdb.firebaseio.com", // Realtime DB URL!
+  projectId: "green-54f87",
+  storageBucket: "green-54f87.appspot.com",
+  messagingSenderId: "13622576743",
+  appId: "1:13622576743:web:93615f9e92d01a3d7d36c2"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const rtdb = getDatabase(app);
+
+// Admin emails
+const adminEmails = ["onyekamiracle08@gmail.com", "onyekaudechukwum@gmail.com"];
+
+// Tabs toggle
+const loginTab = document.getElementById("loginTab");
+const signupTab = document.getElementById("signupTab");
+const loginForm = document.getElementById("loginForm");
+const signupForm = document.getElementById("signupForm");
+
+loginTab.addEventListener("click", () => {
+  loginForm.classList.remove("hidden");
+  signupForm.classList.add("hidden");
+  loginTab.classList.add("border-green-700"); loginTab.classList.remove("text-gray-400");
+  signupTab.classList.add("text-gray-400"); signupTab.classList.remove("border-green-700");
+});
+
+signupTab.addEventListener("click", () => {
+  loginForm.classList.add("hidden");
+  signupForm.classList.remove("hidden");
+  signupTab.classList.add("border-green-700"); signupTab.classList.remove("text-gray-400");
+  loginTab.classList.remove("border-green-700"); loginTab.classList.add("text-gray-400");
+});
+
+// Password toggles
+document.getElementById("toggleLoginPassword").addEventListener("click", () => {
+  const p = document.getElementById("loginPassword");
+  p.type = p.type === "password" ? "text" : "password";
+});
+document.getElementById("toggleSignupPassword").addEventListener("click", () => {
+  const p = document.getElementById("signupPassword");
+  p.type = p.type === "password" ? "text" : "password";
+});
+document.getElementById("toggleSignupConfirm").addEventListener("click", () => {
+  const p = document.getElementById("signupConfirmPassword");
+  p.type = p.type === "password" ? "text" : "password";
+});
+
+// SIGN UP
+signupForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = document.getElementById("signupName").value;
+  const email = document.getElementById("signupEmail").value;
+  const password = document.getElementById("signupPassword").value;
+  const confirm = document.getElementById("signupConfirmPassword").value;
+
+  if(password !== confirm){ alert("Passwords do not match"); return; }
+
+  try{
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    const role = adminEmails.includes(email) ? "admin" : "student";
+
+    await set(ref(rtdb, "users/" + user.uid), {
+      uid: user.uid,
+      name,
+      email,
+      role,
+      createdAt: new Date().toISOString()
+    });
+
+    localStorage.setItem("userRole", role);
+    localStorage.setItem("userEmail", email);
+    alert(`Sign-up successful! Role: ${role}`);
+    window.location.href = "index.html";
+  } catch(err){
+    alert("Error: " + err.message);
+  }
+});
+
+// LOGIN
+loginForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+
+  try{
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Get user data from Realtime DB
+    const dbRef = ref(rtdb);
+    const snapshot = await get(child(dbRef, "users/" + user.uid));
+    const userData = snapshot.exists() ? snapshot.val() : { name: "Unknown", role: "student" };
+    const role = adminEmails.includes(email) ? "admin" : userData.role;
+
+    await set(ref(rtdb, "users/" + user.uid), {
+      uid: user.uid,
+      name: userData.name,
+      email,
+      role,
+      lastLogin: new Date().toISOString()
+    });
+
+    localStorage.setItem("userRole", role);
+    localStorage.setItem("userEmail", email);
+    alert(`Login successful! Role: ${role}`);
+    window.location.href = "index.html";
+  } catch(err){
+    alert("Error: " + err.message);
+  }
+});
+
+// LOGOUT
+export function logout(){
+  signOut(auth).then(() => {
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userEmail");
+    alert("Logged out successfully");
+    window.location.href = "index.html";
+  }).catch(err => alert("Logout error: " + err.message));
+}
+</script>
+
+</body>
+</html>
